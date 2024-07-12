@@ -1,19 +1,34 @@
 from os import getenv
+from threading import Thread 
 import zmq
 
-from entity.file import File
+from entity.audio import Audio
+from entity.user import User
+from services.client.interface.service import Service
+import json
 
-
-def receive_audio():
-    context = zmq.Context()
-    socket = context.socket(zmq.SUB)
+class AudioService(Service):
+    def __init__(self, user: User) -> None:
+        self.thread = Thread(target=self.receive, name="AudioThread")
+        self.user : User = user
     
-    addr = getenv('SUB_AUDIO_ADDR')
+    def start(self) -> None:
+        self.thread.start()
 
-    socket.connect(addr)
-    
-    socket.setsockopt(zmq.SUBSCRIBE, b"")
+    def wait(self) -> None:
+        self.thread.join()
 
-    while True:
-        file: File = socket.recv_pyobj()
-        file.play()
+    def receive(self) -> None:
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        
+        addr = getenv('SUB_AUDIO_ADDR')
+
+        socket.connect(addr)
+        
+        socket.setsockopt(zmq.SUBSCRIBE, b"")
+
+        while True:
+            audio : Audio = socket.recv_pyobj()
+            audio.play()
+

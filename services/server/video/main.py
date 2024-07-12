@@ -2,6 +2,7 @@ from os import getenv
 import cv2
 import zmq
 
+from entity.user import User
 from entity.video import Video
 
 def send_video():
@@ -27,9 +28,9 @@ def send_video():
 
     if(not ret):
       break
-
+    
     videoData = {
-      "owner": "Reginaldo",
+      "owner": User("Reginaldo"),
       "frame": frame
     }
 

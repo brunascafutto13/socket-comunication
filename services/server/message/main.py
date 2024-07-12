@@ -3,6 +3,7 @@ import time
 import zmq
 
 from entity.message import Message
+from entity.user import User
 
 def send_message():
     context = zmq.Context()
@@ -17,7 +18,7 @@ def send_message():
     socket.bind(addr)
     
     message_data = {
-        "owner": "Reginaldo",
+        "owner": User("Reginaldo"),
         "content": "Oi, tudo bem"
     }
 
