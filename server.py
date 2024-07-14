@@ -9,7 +9,7 @@ from services.server.video.main import send_video
 
 def main():
     load_dotenv()
-
+    print("Servidor rodando")
     # Configuração do signal handler para interrupção do programa
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 

@@ -2,14 +2,18 @@
 from os import getenv
 import zmq
 
-from entity.message import Message
+# from entity.message import Message
+class Message:
+  def __init__(self, messagerDict: dict) -> None:
+    self.owner = messagerDict["owner"]
+    self.content = messagerDict["content"]
 
 
 def receive_text():
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    addr = getenv('SUB_MESSAGE_ADDR')
+    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
 
     socket.connect(addr)
     
@@ -20,3 +24,6 @@ def receive_text():
         if message:
             print(message.owner)
             print(message.content)
+
+if __name__ == "__main__":
+    receive_text()

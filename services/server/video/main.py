@@ -1,36 +1,50 @@
 from os import getenv
 import cv2
 import zmq
+from dotenv import load_dotenv
+import pickle
+# from entity.video import Video  # Importe o módulo do Video se estiver em um arquivo separado
+class Video:
+  def __init__(self, videoDict: dict) -> None:
+    self.owner = videoDict["owner"]
+    self.frame = videoDict["frame"]
 
-from entity.video import Video
+load_dotenv()
 
 def send_video():
-  context = zmq.Context()
-  socket = context.socket(zmq.PUB)
-  
-  addr = getenv('PUB_VIDEO_ADDR')
+    context = zmq.Context()
+    socket = context.socket(zmq.PUB)
 
-  if(not addr):
-      print('Endereço o publisher de texto não encontrado')
-      exit(0)
+    addr = getenv('BROKER_ADDR', 'tcp://localhost:5555')  # Endereço do broker para enviar mensagens
 
-  socket.bind(addr)
+    print(addr)
+    if not addr:
+        print('Endereço do publisher de vídeo não encontrado')
+        exit(0)
 
-  cap = cv2.VideoCapture(0)
-  
-  if not cap.isOpened():
-    print("Erro ao abrir a câmera.")
-    exit(1)
+    socket.connect(addr)
 
-  while True:
-    ret, frame = cap.read()
+    cap = cv2.VideoCapture(0)
+    
+    if not cap.isOpened():
+        print("Erro ao abrir a câmera.")
+        exit(1)
 
-    if(not ret):
-      break
+    while True:
+        ret, frame = cap.read()
 
-    videoData = {
-      "owner": "Reginaldo",
-      "frame": frame
-    }
+        if not ret:
+            break
 
-    socket.send_pyobj(Video(videoData))
+        videoData = {
+            "owner": "Reginaldo",
+            "frame": frame
+        }
+      
+        print(f"Enviado: {videoData}")
+        serialized_data = pickle.dumps(Video(videoData))  # Serializa o objeto antes de enviar
+        socket.send(serialized_data)
+        # socket.send_pyobj(Video(videoData))
+
+if __name__ == "__main__":
+    send_video()
