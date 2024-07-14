@@ -8,7 +8,7 @@ class Video:
     def __init__(self, video_dict: dict) -> None:
         self.owner = video_dict["owner"]
         self.frame = video_dict["frame"]
-    
+
 load_dotenv()
 
 def receive_video():
@@ -18,8 +18,7 @@ def receive_video():
     addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
     print(addr)
     socket.connect(addr)
-    
-    # Subscribing to the "video" topic
+
     socket.setsockopt(zmq.SUBSCRIBE, b"video")
 
     while True:
@@ -29,6 +28,8 @@ def receive_video():
             cv2.imshow(video.owner, video.frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     receive_video()

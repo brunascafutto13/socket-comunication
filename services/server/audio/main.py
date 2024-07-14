@@ -1,39 +1,18 @@
 from os import getenv
 import zmq
-import sounddevice
 import pickle
+import pyaudio
+from dotenv import load_dotenv
 import time
-import soundfile as sf
-import os
 
 class File:
     def __init__(self, filedict: dict) -> None:
         self.rate = filedict["rate"]
         self.data = filedict["data"]
 
-    def play(self):
-        sounddevice.play(self.data, self.rate)
-        sounddevice.wait()
+load_dotenv()
 
-current_dir = os.path.dirname(__file__)  # Diretório atual deste script
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))  # Diretório raiz do projeto
-file_path = os.path.join(project_root, 'public', 'file.mp3')
-
-def read_audio_file(file_path):
-    try:
-        data, rate = sf.read(file_path)
-        return data, rate
-    except Exception as e:
-        print(f"Erro ao ler arquivo de áudio: {e}")
-        return None, None
-
-data, rate = read_audio_file(file_path)
-
-if data is None:
-    exit(1)
-
-
-def send_file():
+def send_audio():
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     
@@ -44,17 +23,42 @@ def send_file():
         exit(0)
 
     socket.connect(addr)
+    
+    p = pyaudio.PyAudio()
+    rate = 16000  # Taxa de amostragem
+    channels = 1
+    format = pyaudio.paInt16
+    chunk = 3200  # Tamanho do buffer
 
-    file = {
-        "data": data,
-        "rate": rate
-    }
-
-    while True:
-        print(f"Enviado: {file}")
-        serialized_data = pickle.dumps(File(file))
+    def callback(in_data, frame_count, time_info, status):
+        audio_data = {
+            "rate": rate,
+            "data": in_data
+        }
+        serialized_data = pickle.dumps(File(audio_data))
         socket.send_multipart([b"audio", serialized_data])
-        time.sleep(5)
+        return (in_data, pyaudio.paContinue)
+
+    stream = p.open(format=format,
+                    channels=channels,
+                    rate=rate,
+                    input=True,
+                    frames_per_buffer=chunk,
+                    stream_callback=callback)
+
+    print("Gravação iniciada...")
+    try:
+        stream.start_stream()
+        while stream.is_active():
+            # time.sleep(0.1)
+            pass
+    except KeyboardInterrupt:
+        print("Gravação interrompida")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
 
 if __name__ == "__main__":
-    send_file()
+    send_audio()

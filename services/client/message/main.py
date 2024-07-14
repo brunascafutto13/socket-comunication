@@ -22,7 +22,7 @@ def receive_text():
         topic, serialized_data = socket.recv_multipart()
         message: Message = pickle.loads(serialized_data)
         if message:
-            print(message.owner)
+            print("Mensagem de:", message.owner)
             print(message.content)
 
 if __name__ == "__main__":

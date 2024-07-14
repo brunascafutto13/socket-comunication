@@ -1,6 +1,5 @@
 from os import getenv
 import zmq
-import time
 import pickle
 
 class Message:
@@ -19,16 +18,25 @@ def send_message():
         exit(0)
 
     socket.connect(addr)
-    message_data = {
-        "owner": "Reginaldo",
-        "content": "Oi, tudo bem"
-    }
+    
+    owner = "Reginaldo"
+    print("Pressione Enter sem digitar nada para sair.")
 
     while True:
-        print(f"Enviado: {message_data}")
+        content = input("Digite a mensagem a ser enviada: ")
+        
+        if not content:
+            print("Saindo...")
+            break
+        
+        message_data = {
+            "owner": owner,
+            "content": content
+        }
+
         serialized_data = pickle.dumps(Message(message_data))
         socket.send_multipart([b"texto", serialized_data])
-        time.sleep(5)
+        print(f"Enviado: {message_data}")
 
 if __name__ == "__main__":
     send_message()

@@ -2,7 +2,6 @@ from os import getenv
 import zmq
 import cv2
 import pickle
-import time
 from dotenv import load_dotenv
 
 class Video:
@@ -35,16 +34,17 @@ def send_video():
 
         if not ret:
             break
+        
+        # Redimensionar o frame para reduzir o tamanho dos dados enviados
+        frame = cv2.resize(frame, (640, 480))
 
         video_data = {
             "owner": "Reginaldo",
             "frame": frame
         }
 
-        print(f"Enviado: {video_data}")
         serialized_data = pickle.dumps(Video(video_data))
         socket.send_multipart([b"video", serialized_data])
-        time.sleep(5)
 
 if __name__ == "__main__":
     send_video()
