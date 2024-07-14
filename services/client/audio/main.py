@@ -1,16 +1,16 @@
 from os import getenv
 import zmq
 import sounddevice
+import pickle
 
-# from entity.file import File
 class File:
-  def __init__(self, filedict: dict) -> None:
-    self.rate = filedict["rate"]
-    self.data = filedict["data"]
+    def __init__(self, filedict: dict) -> None:
+        self.rate = filedict["rate"]
+        self.data = filedict["data"]
 
-  def play(self):
-    sounddevice.play(self.data, self.rate)
-    sounddevice.wait()
+    def play(self):
+        sounddevice.play(self.data, self.rate)
+        sounddevice.wait()
 
 def receive_audio():
     context = zmq.Context()
@@ -20,14 +20,14 @@ def receive_audio():
 
     socket.connect(addr)
     
-    socket.setsockopt(zmq.SUBSCRIBE, b"")
+    socket.setsockopt(zmq.SUBSCRIBE, b"audio")
 
     while True:
-        file: File = socket.recv_pyobj()
+        topic, serialized_data = socket.recv_multipart()
+        file: File = pickle.loads(serialized_data)
         if file:
             print("audio recebido")
             file.play()
-
 
 if __name__ == "__main__":
     receive_audio()

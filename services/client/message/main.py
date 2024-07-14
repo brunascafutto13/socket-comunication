@@ -1,13 +1,11 @@
-
 from os import getenv
 import zmq
+import pickle
 
-# from entity.message import Message
 class Message:
-  def __init__(self, messagerDict: dict) -> None:
-    self.owner = messagerDict["owner"]
-    self.content = messagerDict["content"]
-
+    def __init__(self, message_dict: dict) -> None:
+        self.owner = message_dict["owner"]
+        self.content = message_dict["content"]
 
 def receive_text():
     context = zmq.Context()
@@ -17,10 +15,12 @@ def receive_text():
 
     socket.connect(addr)
     
-    socket.setsockopt(zmq.SUBSCRIBE, b"")
+    # Subscribing to the "texto" topic
+    socket.setsockopt(zmq.SUBSCRIBE, b"texto")
 
     while True:
-        message : Message = socket.recv_pyobj()
+        topic, serialized_data = socket.recv_multipart()
+        message: Message = pickle.loads(serialized_data)
         if message:
             print(message.owner)
             print(message.content)

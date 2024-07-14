@@ -1,28 +1,23 @@
 from os import getenv
-import time
 import zmq
-from dotenv import load_dotenv
+import time
 import pickle
 
-# from entity.message import Message
-load_dotenv()
 class Message:
-  def __init__(self, messagerDict: dict) -> None:
-    self.owner = messagerDict["owner"]
-    self.content = messagerDict["content"]
-
+    def __init__(self, message_dict: dict) -> None:
+        self.owner = message_dict["owner"]
+        self.content = message_dict["content"]
 
 def send_message():
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     
-    addr = getenv('BROKER_ADDR')
+    addr = getenv('BROKER_ADDR', 'tcp://localhost:5555')
 
-    if(not addr):
-        print('Endereço o publisher de texto não encontrado')
+    if not addr:
+        print('Endereço do publisher de texto não encontrado')
         exit(0)
 
-    # socket.bind(addr)
     socket.connect(addr)
     message_data = {
         "owner": "Reginaldo",
@@ -31,8 +26,9 @@ def send_message():
 
     while True:
         print(f"Enviado: {message_data}")
-        serialized_data = pickle.dumps(Message(message_data))  # Serializa o objeto antes de enviar
-        socket.send(serialized_data)  # Atraso para evitar loop contínuo
+        serialized_data = pickle.dumps(Message(message_data))
+        socket.send_multipart([b"texto", serialized_data])
+        time.sleep(5)
 
 if __name__ == "__main__":
     send_message()

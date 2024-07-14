@@ -3,12 +3,11 @@ import cv2
 import zmq
 from dotenv import load_dotenv
 import pickle
-# from entity.video import Video  # Importe o módulo do Video se estiver em um arquivo separado
 
 class Video:
-  def __init__(self, videoDict: dict) -> None:
-    self.owner = videoDict["owner"]
-    self.frame = videoDict["frame"]
+    def __init__(self, video_dict: dict) -> None:
+        self.owner = video_dict["owner"]
+        self.frame = video_dict["frame"]
     
 load_dotenv()
 
@@ -16,14 +15,16 @@ def receive_video():
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')  # Endereço do broker para receber mensagens
+    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
     print(addr)
     socket.connect(addr)
     
-    socket.setsockopt(zmq.SUBSCRIBE, b"")
+    # Subscribing to the "video" topic
+    socket.setsockopt(zmq.SUBSCRIBE, b"video")
 
     while True:
-        video = socket.recv_pyobj()
+        topic, serialized_data = socket.recv_multipart()
+        video: Video = pickle.loads(serialized_data)
         if video:
             cv2.imshow(video.owner, video.frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
