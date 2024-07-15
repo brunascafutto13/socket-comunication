@@ -55,8 +55,8 @@ def main():
     root, chat_area = setup_gui(inputIp,owner)
 
     # Iniciando os publicadores (envio de mensagens)
-    #threading.Thread(target=send_audio, args=(inputIp,), name="AudioThreadSend").start()
-    # threading.Thread(target=send_message, args=(chat_area, inputIp, owner), name="TextThreadSend").start()
+    threading.Thread(target=send_audio, args=(inputIp,), name="AudioThreadSend").start() 
+    threading.Thread(target=send_message, args=(chat_area, inputIp, owner), name="TextThreadSend").start()
     threading.Thread(target=send_video, args=(inputIp, owner), name="VideoThreadSend").start()
 
     # Iniciando os receptores (recebimento de mensagens)

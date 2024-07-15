@@ -17,7 +17,7 @@ def receive_audio(inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     
-    addr = "tcp://" +inputIp+ ":5556"
+    addr = "tcp://" +inputIp+ ":5555"
 
     if not addr:
         print('Endereço do broker de áudio não encontrado')

@@ -14,7 +14,7 @@ def receive_text(chat_area,inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    addr = 'tcp://'+inputIp+':5556'
+    addr = 'tcp://'+inputIp+':5555'
 
     socket.connect(addr)
     

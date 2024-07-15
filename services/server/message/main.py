@@ -13,7 +13,7 @@ def send_message(message, inputIp,owner):
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     
-    addr = 'tcp://'+inputIp+":5555"
+    addr = 'tcp://'+inputIp+":5556"
 
     if not addr:
         print('Endereço do publisher de texto não encontrado')

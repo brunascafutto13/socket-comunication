@@ -17,7 +17,7 @@ def receive_video(inputIp):
 
     # addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
 
-    addr = 'tcp://'+inputIp+':5556'
+    addr = 'tcp://'+inputIp+':5555'
     # print(addr)
     socket.connect(addr)
 
