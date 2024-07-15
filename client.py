@@ -1,9 +1,10 @@
+# Importação das bibliotecas
 import tkinter as tk
 from tkinter import scrolledtext
 import threading
 import signal
-from dotenv import load_dotenv
 
+# Importação das funções
 from services.server.audio.main import send_audio
 from services.server.message.main import send_message
 from services.server.video.main import send_video
@@ -11,6 +12,7 @@ from services.client.audio.main import receive_audio
 from services.client.message.main import receive_text
 from services.client.video.main import receive_video
 
+# Interface gráfica
 def setup_gui():
     root = tk.Tk()
     root.title("Chat Client")
@@ -32,53 +34,39 @@ def setup_gui():
     send_button = tk.Button(frame, text="Send", command=send_message_wrapper)
     send_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-    return root, chat_area,entry
-
+    return root, chat_area
 
 def main():
-    # load_dotenv()
     print("Cliente rodando")
+
     # Configuração do signal handler para interrupção do programa
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    root, chat_area,entry = setup_gui()
+
+    # Input do nome do cliente
+    owner = input("Informe o seu nome: ")
+
+    # Input de endereço IP
+    inputIp = input("Insira o endereço IP do computador cliente: [Default:localhost] ")
+    if not inputIp:
+        inputIp = 'localhost'
+
+    # Configuração da interface gráfica
+    root, chat_area = setup_gui()
 
     # Iniciando os publicadores (envio de mensagens)
-    threads_sender = []
-    send_audio_thread = threading.Thread(target=send_audio, name="AudioThread")
-    send_text_thread = threading.Thread(target=send_message, args=(chat_area,), name="TextThread")  
-    send_video_thread = threading.Thread(target=send_video, name="VideoThread")
-    threads_sender.append(send_audio_thread)
-    threads_sender.append(send_text_thread)
-    threads_sender.append(send_video_thread)
+    #threading.Thread(target=send_audio, args=(inputIp,), name="AudioThreadSend").start()
+    # threading.Thread(target=send_message, args=(chat_area, inputIp, owner), name="TextThreadSend").start()
+    threading.Thread(target=send_video, args=(inputIp, owner), name="VideoThreadSend").start()
 
-     # Iniciando os receptores (recebimento de mensagens)
-    threads_receiver = []
-    audio_thread_receive = threading.Thread(target=receive_audio, name="AudioThread")
-    text_thread_receive = threading.Thread(target=receive_text, args=(chat_area,), name="TextThread")
-    video_thread_receive = threading.Thread(target=receive_video, name="VideoThread")
-    threads_receiver.append(audio_thread_receive)
-    threads_receiver.append(text_thread_receive)
-    threads_receiver.append(video_thread_receive)
-    
-    for thread in threads_sender:
-        thread.start()
-    
+    # Iniciando os receptores (recebimento de mensagens)
+    threading.Thread(target=receive_audio, args=(inputIp,), name="AudioThreadReceive").start()
+    threading.Thread(target=receive_text, args=(chat_area, inputIp), name="TextThreadReceive").start()
+    threading.Thread(target=receive_video, args=(inputIp,), name="VideoThreadReceive").start()
+
+    print("Publicadores e receptores iniciados")
+
+    # Iniciando a interface gráfica
     root.mainloop()
-
-    for thread in threads_sender:
-        thread.join()
-
-    print("Publicadores encerrados")
-
-   
-    
-    for thread in threads_receiver:
-        thread.start()
-
-    for thread in threads_receiver:
-        thread.join()
-
-    print("Receptores encerrados")
 
 try:
     main()

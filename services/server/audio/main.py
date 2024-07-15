@@ -3,18 +3,20 @@ import zmq
 import pyaudio
 import numpy as np
 
-def send_audio():
+def send_audio(inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
+
     
-    addr = getenv('BROKER_ADDR', 'tcp://localhost:5555')
+    addr = "tcp://"+inputIp + ":5555"
 
     if not addr:
         print('Endereço do publisher de áudio não encontrado')
         exit(0)
 
+    print(addr)
     socket.connect(addr)
-    
+    # print(add)
     audio = pyaudio.PyAudio()
     
     rate = 44100  # Taxa de amostragem

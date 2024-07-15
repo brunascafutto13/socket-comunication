@@ -13,11 +13,11 @@ def apply_lowpass_filter(audio_data, rate, cutoff_freq=4000, order=5):
     filtered_audio = filtfilt(b, a, audio_data)
     return filtered_audio.astype(np.int16)
 
-def receive_audio():
+def receive_audio(inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     
-    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
+    addr = "tcp://" +inputIp+ ":5556"
 
     if not addr:
         print('Endereço do broker de áudio não encontrado')

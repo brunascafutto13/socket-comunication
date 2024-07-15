@@ -11,12 +11,14 @@ class Video:
 
 load_dotenv()
 
-def receive_video():
+def receive_video(inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
-    print(addr)
+    # addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
+
+    addr = 'tcp://'+inputIp+':5556'
+    # print(addr)
     socket.connect(addr)
 
     socket.setsockopt(zmq.SUBSCRIBE, b"video")

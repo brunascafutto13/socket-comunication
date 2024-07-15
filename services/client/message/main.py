@@ -10,11 +10,11 @@ class Message:
 
 
 
-def receive_text(chat_area):
+def receive_text(chat_area,inputIp):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
+    addr = 'tcp://'+inputIp+':5556'
 
     socket.connect(addr)
     

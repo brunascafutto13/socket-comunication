@@ -9,21 +9,22 @@ class Message:
         self.content = message_dict["content"]
 
 
-def send_message(message):
+def send_message(message, inputIp,owner):
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
     
-    addr = getenv('BROKER_ADDR', 'tcp://localhost:5555')
+    addr = 'tcp://'+inputIp+":5555"
 
     if not addr:
         print('Endereço do publisher de texto não encontrado')
+        print(addr)
         exit(0)
+
+    # print(addr)
 
     socket.connect(addr)
     
-    owner = "Reginaldo"
     print("Pressione Enter sem digitar nada para sair.")
-
 
         
     message_data = {

@@ -11,14 +11,15 @@ class Video:
 
 load_dotenv()
 
-def send_video():
+def send_video(inputIp,owner):
     context = zmq.Context()
     socket = context.socket(zmq.PUB)
 
-    addr = getenv('BROKER_ADDR', 'tcp://localhost:5555')
+    addr = 'tcp://'+inputIp+ ":5555"
 
     if not addr:
         print('Endereço do publisher de vídeo não encontrado')
+
         exit(0)
 
     socket.connect(addr)
@@ -39,7 +40,7 @@ def send_video():
         frame = cv2.resize(frame, (640, 480))
 
         video_data = {
-            "owner": "Reginaldo",
+            "owner": owner,
             "frame": frame
         }
 
