@@ -46,5 +46,5 @@ def send_video():
         serialized_data = pickle.dumps(Video(video_data))
         socket.send_multipart([b"video", serialized_data])
 
-if __name__ == "__main__":
-    send_video()
+# if __name__ == "__main__":
+#     send_video()

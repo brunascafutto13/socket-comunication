@@ -1,14 +1,17 @@
 from os import getenv
 import zmq
-import pickle
 import pyaudio
 import numpy as np
-from collections import deque
-import time
-class File:
-    def __init__(self, filedict: dict) -> None:
-        self.rate = filedict["rate"]
-        self.data = filedict["data"]
+from scipy.signal import butter, filtfilt
+
+#Filtro para o ruido
+
+def apply_lowpass_filter(audio_data, rate, cutoff_freq=4000, order=5):
+    nyquist_freq = 0.5 * rate
+    normal_cutoff = cutoff_freq / nyquist_freq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    filtered_audio = filtfilt(b, a, audio_data)
+    return filtered_audio.astype(np.int16)
 
 def receive_audio():
     context = zmq.Context()
@@ -16,37 +19,36 @@ def receive_audio():
     
     addr = getenv('BROKER_BACKEND_ADDR', 'tcp://localhost:5556')
 
+    if not addr:
+        print('Endereço do broker de áudio não encontrado')
+        exit(0)
+
     socket.connect(addr)
     socket.setsockopt(zmq.SUBSCRIBE, b"audio")
 
-    p = pyaudio.PyAudio()
-    buffer = deque(maxlen=10)  # Buffer de recepção
-    last_played_time = [time.time()]
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=pyaudio.paInt16,
+                        channels=1,
+                        rate=44100,
+                        output=True)
 
-    def play_audio(data, rate):
-        current_time = time.time()
-        if current_time - last_played_time[0] > 0.1:  # Garante um intervalo mínimo entre as reproduções
-            stream = p.open(format=pyaudio.paInt16,
-                            channels=1,
-                            rate=rate,
-                            output=True)
-            stream.write(data)
-            stream.stop_stream()
-            stream.close()
-            last_played_time[0] = time.time()
+    try:
+        while True:
+            topic, serialized_data = socket.recv_multipart()
+            audio_data = np.frombuffer(serialized_data, dtype=np.int16)
+            
+            # Aplicar filtro passa-baixa
+            filtered_audio = apply_lowpass_filter(audio_data, rate=44100)
+            
+            print(f"Recebido áudio de {topic}")
+            stream.write(filtered_audio.tobytes())
 
-    while True:
-        topic, serialized_data = socket.recv_multipart()
-        file = pickle.loads(serialized_data)
-        if isinstance(file, File):
-            print("Áudio recebido")
-            buffer.append(file.data) #melhorar a latencia de recebimento
-            if len(buffer) > 8:  # Tamanho mínimo do buffer para começar a reprodução
-                    current_time = time.time()
-                    if current_time - last_played_time[0] > 0.1:  # Garante um intervalo mínimo entre as reproduções
-                        play_audio(buffer.popleft(), file.rate)
-        else:
-            print("Dados recebidos não são um objeto File")
-   
+    except KeyboardInterrupt:
+        pass
+    finally:
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+
 if __name__ == "__main__":
     receive_audio()

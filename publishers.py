@@ -1,14 +1,34 @@
-import subprocess
-import os
+import threading
+import signal
+from dotenv import load_dotenv
 
-def start_publishers():
-    audio_publisher = 'services/server/audio/main.py'
-    video_publisher = 'services/server/video/main.py'
-    message_publisher = 'services/server/message/main.py'
+from services.server.audio.main import send_audio
+from services.server.message.main import send_message
+from services.server.video.main import send_video
 
-    subprocess.Popen(['python', audio_publisher])
-    subprocess.Popen(['python', video_publisher])
-    subprocess.Popen(['python', message_publisher])
+def main():
+    # load_dotenv()
+    print("Servidor rodando")
+    # Configuração do signal handler para interrupção do programa
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-if __name__ == "__main__":
-    start_publishers()
+
+    # Iniciando os publicadores
+    threads = []
+    audio_thread = threading.Thread(target=send_audio, name="AudioThread")
+    text_thread = threading.Thread(target=send_message, name="TextThread")
+    video_thread = threading.Thread(target=send_video, name="VideoThread")
+    threads.append(audio_thread)
+    threads.append(text_thread)
+    threads.append(video_thread)
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+try:
+    main()
+except KeyboardInterrupt:
+    print("Servidor encerrado")

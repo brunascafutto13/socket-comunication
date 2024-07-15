@@ -31,5 +31,5 @@ def receive_video():
 
     cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    receive_video()
+# if __name__ == "__main__":
+#     receive_video()

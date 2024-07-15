@@ -3,13 +3,9 @@ import pickle
 import sounddevice
 
 class File:
-    def __init__(self, filedict: dict) -> None:
-        self.rate = filedict["rate"]
-        self.data = filedict["data"]
-
-    def play(self):
-        sounddevice.play(self.data, self.rate)
-        sounddevice.wait()
+    def __init__(self, audio_data: bytes, rate: int) -> None:
+        self.rate = rate
+        self.data = audio_data
 
 class Video:
     def __init__(self, video_dict: dict) -> None:
@@ -34,7 +30,6 @@ def broker():
     try:
         while True:
             topic, serialized_data = frontend.recv_multipart()
-            message = pickle.loads(serialized_data)
 
             if topic == b"texto":
                 print("Recebido arquivo de texto")

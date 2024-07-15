@@ -1,13 +1,16 @@
 from os import getenv
 import zmq
 import pickle
-
+import tkinter as tk
+from tkinter import scrolledtext
 class Message:
     def __init__(self, message_dict: dict) -> None:
         self.owner = message_dict["owner"]
         self.content = message_dict["content"]
 
-def receive_text():
+
+
+def receive_text(chat_area):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
@@ -24,6 +27,8 @@ def receive_text():
         if message:
             print("Mensagem de:", message.owner)
             print(message.content)
+            chat_area.insert(tk.END, f"You: {message.content}\n")
+            # entry.delete(0, tk.END)
 
-if __name__ == "__main__":
-    receive_text()
+# if __name__ == "__main__":
+#     receive_text()
