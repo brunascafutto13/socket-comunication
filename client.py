@@ -13,7 +13,7 @@ from services.client.message.main import receive_text
 from services.client.video.main import receive_video
 
 # Interface gráfica
-def setup_gui():
+def setup_gui(inputIp,owner):
     root = tk.Tk()
     root.title("Chat Client")
 
@@ -26,12 +26,13 @@ def setup_gui():
     entry = tk.Entry(frame, width=40)
     entry.pack(side=tk.LEFT, padx=5, pady=5)
 
-    def send_message_wrapper():
+    def send_message_wrapper(inputIp,owner):
         message_text = entry.get()
-        send_message(message_text)
+        send_message(message_text,inputIp,owner)
         entry.delete(0, tk.END)  # Limpa o campo de entrada após enviar a mensagem
-
-    send_button = tk.Button(frame, text="Send", command=send_message_wrapper)
+        # print(inputIp,owner,"daad")
+    
+    send_button = tk.Button(frame, text="Send", command=lambda:send_message_wrapper(inputIp,owner))
     send_button.pack(side=tk.LEFT, padx=5, pady=5)
 
     return root, chat_area
@@ -51,7 +52,7 @@ def main():
         inputIp = 'localhost'
 
     # Configuração da interface gráfica
-    root, chat_area = setup_gui()
+    root, chat_area = setup_gui(inputIp,owner)
 
     # Iniciando os publicadores (envio de mensagens)
     #threading.Thread(target=send_audio, args=(inputIp,), name="AudioThreadSend").start()
