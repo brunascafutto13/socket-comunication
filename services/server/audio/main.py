@@ -48,5 +48,5 @@ def send_audio(inputIp):
         stream.close()
         audio.terminate()
 
-if __name__ == "__main__":
-    send_audio()
+# if __name__ == "__main__":
+#     send_audio()
