@@ -226,7 +226,8 @@ def send_video(inputIp, owner, client_id):
         
         # Redimensionar o frame para reduzir o tamanho dos dados enviados
         frame = cv2.resize(frame, (640, 480))
-
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer
         video_data = {
             "owner": owner,
             "frame": frame,
@@ -252,7 +253,8 @@ def receive_video(inputIp, client_id):
             video["owner"] = "You"
         if video:
         # if video:
-            cv2.imshow(video["owner"], video["frame"])
+            frame = cv2.imdecode(np.frombuffer(video["frame"], np.uint8), cv2.IMREAD_COLOR)
+            cv2.imshow(video["owner"], frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -305,13 +307,13 @@ def main():
 
     # Iniciando os publicadores (envio de mensagens)
     threading.Thread(target=send_message, args=(inputIp, owner, client_id), name="TextThreadSend").start()
-    threading.Thread(target=send_audio, args=(inputIp,owner,client_id), name="AudioThreadSend").start()
+    # threading.Thread(target=send_audio, args=(inputIp,owner,client_id), name="AudioThreadSend").start()
     threading.Thread(target=send_video, args=(inputIp, owner, client_id), name="VideoThreadSend").start()
 
     # Iniciando os receptores (recebimento de mensagens)
     threading.Thread(target=receive_video, args=(inputIp, client_id), name="VideoThreadReceive").start()
     threading.Thread(target=receive_text, args=(inputIp, client_id), name="TextThreadReceive").start()
-    threading.Thread(target=receive_audio, args=(inputIp,client_id,exception_queue), name="AudioThreadReceive").start()
+    # threading.Thread(target=receive_audio, args=(inputIp,client_id,exception_queue), name="AudioThreadReceive").start()
 
     # Iniciando a interface gráfica
     # root.mainloop()
