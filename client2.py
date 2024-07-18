@@ -33,6 +33,7 @@ def apply_lowpass_filter(audio_data, rate, cutoff_freq=4000, order=5):
     filtered_audio = filtfilt(b, a, audio_data)
     return filtered_audio.astype(np.int16)
 
+
 def receive_audio(inputIp, client_id, exception_queue):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
@@ -75,18 +76,18 @@ def receive_audio(inputIp, client_id, exception_queue):
                 
                 print(f"Recebido áudio de ", data["owner"])
                 stream.write(filtered_audio.tobytes())
-              else:
-                #   audio_data = np.frombuffer(data["audio"], dtype=np.int16)
+            #   else:
+            #       audio_data = np.frombuffer(data["audio"], dtype=np.int16)
                 
-                # # Aplicar filtro passa-baixa
-                #   filtered_audio = apply_lowpass_filter(audio_data, rate=44100)
+            #     # Aplicar filtro passa-baixa
+            #       filtered_audio = apply_improved_lowpass_filter(audio_data, rate=44100)
                 
-                #   print(f"Recebido áudio de ", data["owner"])
-                  stream.write(data["audio"])
+            #     #   print(f"Recebido áudio de ", data["owner"])
+            #       stream.write(filtered_audio.tobytes())
                   
                   
-         else:
-            print("Não recebido")
+        #  else:
+            # print("Não recebido")
              
     except Exception as e:
         exception_queue.put(e)
@@ -100,7 +101,7 @@ def send_audio(inputIp, owner, client_id):
 
     audio = pyaudio.PyAudio()
 
-    rate = 16000  # Taxa de amostragem
+    rate = 44100  # Taxa de amostragem
     channels = 1
     format = pyaudio.paInt16
     chunk = 1024  # Tamanho do buffer
@@ -118,6 +119,8 @@ def send_audio(inputIp, owner, client_id):
     try:
         while True:
             audio_data = stream.read(chunk, exception_on_overflow=False)
+            amplitude = np.mean(np.abs(np.frombuffer(audio_data, dtype=np.int16)))
+            threshold = 500
             file = {
                 "audio": audio_data,
                 "client_id": client_id,
@@ -245,7 +248,9 @@ def receive_video(inputIp, client_id):
     while True:
         topic, serialized_data = socket.recv_multipart()
         video = pickle.loads(serialized_data)
-        if video and video["client_id"] != client_id:
+        if video["client_id"] ==client_id:
+            video["owner"] = "You"
+        if video:
         # if video:
             cv2.imshow(video["owner"], video["frame"])
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -304,8 +309,8 @@ def main():
     threading.Thread(target=send_video, args=(inputIp, owner, client_id), name="VideoThreadSend").start()
 
     # Iniciando os receptores (recebimento de mensagens)
-    threading.Thread(target=receive_text, args=(inputIp, client_id), name="TextThreadReceive").start()
     threading.Thread(target=receive_video, args=(inputIp, client_id), name="VideoThreadReceive").start()
+    threading.Thread(target=receive_text, args=(inputIp, client_id), name="TextThreadReceive").start()
     threading.Thread(target=receive_audio, args=(inputIp,client_id,exception_queue), name="AudioThreadReceive").start()
 
     # Iniciando a interface gráfica
