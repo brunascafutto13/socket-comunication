@@ -88,37 +88,43 @@ def send_audio(inputIp, owner, client_id):
     socket = context.socket(zmq.PUB)
 
     addr = "tcp://" + inputIp + ":5555"
-
-
-    # print(f"Conectando a {addr}")
     socket.connect(addr)
 
     audio = pyaudio.PyAudio()
-    
+
     rate = 16000  # Taxa de amostragem
     channels = 1
     format = pyaudio.paInt16
     chunk = 1024  # Tamanho do buffer
-        
-    stream = audio.open(format=format,
+
+    try:
+        stream = audio.open(format=format,
                             channels=channels,
                             rate=rate,
                             input=True,
                             frames_per_buffer=chunk,)
-    while True:
-            # print(stream)
-            audio_data = stream.read(1024, exception_on_overflow=False)
-            # stream.flush()
-            print("a")
+    except Exception as e:
+        print(f"Error opening audio stream: {e}")
+        return
+
+    try:
+        while True:
+            audio_data = stream.read(chunk, exception_on_overflow=False)
             file = {
                 "audio": audio_data,
                 "client_id": client_id,
                 "owner": owner
             }
-
             serialized_data = pickle.dumps(file)
-            print(serialized_data)
-            socket.send_multipart([b"audio",file])
+            socket.send_multipart([b"audio", serialized_data])
+            print("Audio sent")
+    except Exception as e:
+        print(f"Erro durante a gravação ou envio de áudio: {e}")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+        print("Gravação encerrada")
             # Calcula a amplitude média
             # amplitude = np.mean(np.abs(np.frombuffer(audio_data, dtype=np.int16)))
             # Define um limiar de amplitude
