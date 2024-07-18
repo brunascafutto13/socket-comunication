@@ -236,7 +236,8 @@ def send_video(inputIp, owner, client_id):
 
         serialized_data = pickle.dumps(video_data)
         socket.send_multipart([b"video", serialized_data])
-
+        time.sleep(1/30)
+    cap.release()
 def receive_video(inputIp, client_id):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
