@@ -9,6 +9,8 @@ import zmq
 import cv2
 import pickle
 import uuid
+import time
+import queue
 #Lista global de clientes
 clients_connected = []
 
@@ -31,57 +33,63 @@ def apply_lowpass_filter(audio_data, rate, cutoff_freq=4000, order=5):
     filtered_audio = filtfilt(b, a, audio_data)
     return filtered_audio.astype(np.int16)
 
-def receive_audio(inputIp,client_id):
+def receive_audio(inputIp, client_id, exception_queue):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     
     addr = "tcp://" + inputIp + ":5556"
-
+    print(addr)
     if not addr:
         print('Endereço do broker de áudio não encontrado')
         exit(0)
 
     socket.connect(addr)
     socket.setsockopt(zmq.SUBSCRIBE, b"audio")
+    poller = zmq.Poller()
+    poller.register(socket, zmq.POLLIN)
+    events = poller.poll(1000)
 
     audio = pyaudio.PyAudio()
     try:
         stream = audio.open(format=pyaudio.paInt16,
-                        channels=1,
-                        rate=44100,
-                        output=True,
-                        frames_per_buffer=1024)
+                            channels=1,
+                            rate=44100,
+                            output=True,
+                            frames_per_buffer=1024)
     except Exception as e:
-        print(f"Error opening p stream: {e}")
+        exception_queue.put(e)
         return
-    while True:
-            print("acsd")
-            topic, serialized_data = socket.recv_multipart()
-            data = pickle.loads(serialized_data)
-            # data
-            if(serialized_data["client_id"]!=client_id):
+    try:
+        while True:
+         if events:
+            # Data received
+              topic, serialized_data = socket.recv_multipart()
+            #   print("s")
+              data = pickle.loads(serialized_data)
+
+              if data["client_id"] != client_id:
                 audio_data = np.frombuffer(data["audio"], dtype=np.int16)
-            
+                
                 # Aplicar filtro passa-baixa
                 filtered_audio = apply_lowpass_filter(audio_data, rate=44100)
-            
+                
                 print(f"Recebido áudio de ", data["owner"])
                 stream.write(filtered_audio.tobytes())
-            
-            # audio_data = np.frombuffer(data["audio"], dtype=np.int16)
-            stream.write(data["audio"])
-            # Aplicar filtro passa-baixa
-            # filtered_audio = apply_lowpass_filter(audio_data, rate=44100)
-            
-            print(f"Recebido áudio de ", data["owner"])
-            # stream.write(filtered_audio.tobytes())
-
-    # except KeyboardInterrupt:
-    #     pass
-    # finally:
-    #     stream.stop_stream()
-    #     stream.close()
-    #     audio.terminate()
+              else:
+                #   audio_data = np.frombuffer(data["audio"], dtype=np.int16)
+                
+                # # Aplicar filtro passa-baixa
+                #   filtered_audio = apply_lowpass_filter(audio_data, rate=44100)
+                
+                #   print(f"Recebido áudio de ", data["owner"])
+                  stream.write(data["audio"])
+                  
+                  
+         else:
+            print("Não recebido")
+             
+    except Exception as e:
+        exception_queue.put(e)
 
 def send_audio(inputIp, owner, client_id):
     context = zmq.Context()
@@ -117,7 +125,7 @@ def send_audio(inputIp, owner, client_id):
             }
             serialized_data = pickle.dumps(file)
             socket.send_multipart([b"audio", serialized_data])
-            print("Audio sent")
+            # print("Audio sent")
     except Exception as e:
         print(f"Erro durante a gravação ou envio de áudio: {e}")
     finally:
@@ -285,6 +293,7 @@ def main():
 
     # Gera um identificador exclusivo para este cliente
     client_id = str(uuid.uuid4())
+    exception_queue = queue.Queue()
 
     # Configuração da interface gráfica
     # root, chat_area = setup_gui(inputIp, owner, client_id)
@@ -296,11 +305,18 @@ def main():
 
     # Iniciando os receptores (recebimento de mensagens)
     threading.Thread(target=receive_text, args=(inputIp, client_id), name="TextThreadReceive").start()
-    threading.Thread(target=receive_audio, args=(inputIp,client_id,), name="AudioThreadReceive").start()
     threading.Thread(target=receive_video, args=(inputIp, client_id), name="VideoThreadReceive").start()
+    threading.Thread(target=receive_audio, args=(inputIp,client_id,exception_queue), name="AudioThreadReceive").start()
 
     # Iniciando a interface gráfica
     # root.mainloop()
+    while True:
+        try:
+            e = exception_queue.get(timeout=1)
+            print(f"Exception in thread: {e}")
+        except queue.Empty:
+            pass
+
 
 try:
     main()

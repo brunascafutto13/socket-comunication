@@ -30,13 +30,13 @@ def broker():
     try:
         while True:
             topic, serialized_data = frontend.recv_multipart()
-            print("asas")
             if topic == b"texto":
                 print("Recebido arquivo de texto")
                 backend.send_multipart([b"texto", serialized_data])
             elif topic == b"audio":
                 print("Recebido arquivo de áudio")
                 backend.send_multipart([b"audio", serialized_data])
+                print("sent")
             elif topic == b"video":
                 # print("Recebido arquivo de vídeo")
                 backend.send_multipart([b"video", serialized_data])
